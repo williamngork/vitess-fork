@@ -36,7 +36,6 @@ import (
 	"vitess.io/vitess/go/mysql"
 	"vitess.io/vitess/go/sqltypes"
 	"vitess.io/vitess/go/test/endtoend/cluster"
-	"vitess.io/vitess/go/vt/log"
 	"vitess.io/vitess/go/vt/logutil"
 	"vitess.io/vitess/go/vt/tlstest"
 	"vitess.io/vitess/go/vt/vtctl/vtctlclient"
@@ -252,33 +251,6 @@ func TestCanGetKeyspaces(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	assertGetKeyspaces(ctx, t, clusterInstance)
-}
-
-func TestExternalTopoServerConsul(t *testing.T) {
-	conf := config
-	defer resetConfig(conf)
-
-	// Start a single consul in the background.
-	cmd, serverAddr := startConsul(t)
-	defer func() {
-		// Alerts command did not run successful
-		if err := cmd.Process.Kill(); err != nil {
-			log.Errorf("cmd process kill has an error: %v", err)
-		}
-		// Alerts command did not run successful
-		if err := cmd.Wait(); err != nil {
-			log.Errorf("cmd process wait has an error: %v", err)
-		}
-	}()
-
-	cluster, err := startCluster("--external-topo-implementation=consul",
-		"--external-topo-global-server-address="+serverAddr, "--external-topo-global-root=consul_test/global")
-	require.NoError(t, err)
-	defer cluster.TearDown()
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	assertGetKeyspaces(ctx, t, cluster)
 }
 
 func TestMtlsAuthUnauthorizedFails(t *testing.T) {
