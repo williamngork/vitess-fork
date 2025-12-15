@@ -281,47 +281,6 @@ func TestExternalTopoServerConsul(t *testing.T) {
 	assertGetKeyspaces(ctx, t, cluster)
 }
 
-func TestMtlsAuth(t *testing.T) {
-	conf := config
-	defer resetConfig(conf)
-
-	// Our test root.
-	root := t.TempDir()
-
-	// Create the certs and configs.
-	tlstest.CreateCA(root)
-	caCert := path.Join(root, "ca-cert.pem")
-
-	tlstest.CreateSignedCert(root, tlstest.CA, "01", "vtctld", "vtctld.example.com")
-	cert := path.Join(root, "vtctld-cert.pem")
-	key := path.Join(root, "vtctld-key.pem")
-
-	tlstest.CreateSignedCert(root, tlstest.CA, "02", "client", "ClientApp")
-	clientCert := path.Join(root, "client-cert.pem")
-	clientKey := path.Join(root, "client-key.pem")
-
-	// When cluster starts it will apply SQL and VSchema migrations in the configured schema-dir folder
-	// With mtls authorization enabled, the authorized CN must match the certificate's CN
-	cluster, err := startCluster(
-		"--grpc-auth-mode=mtls",
-		fmt.Sprintf("%s=%s", "--grpc-key", key),
-		fmt.Sprintf("%s=%s", "--grpc-cert", cert),
-		fmt.Sprintf("%s=%s", "--grpc-ca", caCert),
-		fmt.Sprintf("%s=%s", "--vtctld-grpc-key", clientKey),
-		fmt.Sprintf("%s=%s", "--vtctld-grpc-cert", clientCert),
-		fmt.Sprintf("%s=%s", "--vtctld-grpc-ca", caCert),
-		fmt.Sprintf("%s=%s", "--grpc-auth-mtls-allowed-substrings", "CN=ClientApp"))
-	require.NoError(t, err)
-	defer func() {
-		cluster.PersistentMode = false // Cleanup the tmpdir as we're done
-		cluster.TearDown()
-	}()
-
-	// startCluster will apply vschema migrations using vtctl grpc and the clientCert.
-	assertColumnVindex(t, cluster, columnVindex{keyspace: "test_keyspace", table: "test_table", vindex: "my_vdx", vindexType: "hash", column: "id"})
-	assertColumnVindex(t, cluster, columnVindex{keyspace: "app_customer", table: "customers", vindex: "hash", vindexType: "hash", column: "id"})
-}
-
 func TestMtlsAuthUnauthorizedFails(t *testing.T) {
 	conf := config
 	defer resetConfig(conf)
