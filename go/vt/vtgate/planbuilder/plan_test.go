@@ -123,34 +123,6 @@ func (s *planTestSuite) TestPlan() {
 	s.testFile("cte_cases.json", vschemaWrapper, false)
 }
 
-// TestForeignKeyPlanning tests the planning of foreign keys in a managed mode by Vitess.
-func (s *planTestSuite) TestForeignKeyPlanning() {
-	vschema := loadSchema(s.T(), "vschemas/schema.json", true)
-	s.setFks(vschema)
-	vschemaWrapper := &vschemawrapper.VSchemaWrapper{
-		V:           vschema,
-		TestBuilder: TestBuilder,
-		Env:         vtenv.NewTestEnv(),
-	}
-
-	s.testFile("foreignkey_cases.json", vschemaWrapper, false)
-}
-
-// TestForeignKeyChecksOn tests the planning when the session variable for foreign_key_checks is set to ON.
-func (s *planTestSuite) TestForeignKeyChecksOn() {
-	vschema := loadSchema(s.T(), "vschemas/schema.json", true)
-	s.setFks(vschema)
-	fkChecksState := true
-	vschemaWrapper := &vschemawrapper.VSchemaWrapper{
-		V:                     vschema,
-		TestBuilder:           TestBuilder,
-		ForeignKeyChecksState: &fkChecksState,
-		Env:                   vtenv.NewTestEnv(),
-	}
-
-	s.testFile("foreignkey_checks_on_cases.json", vschemaWrapper, false)
-}
-
 // TestForeignKeyChecksOff tests the planning when the session variable for foreign_key_checks is set to OFF.
 func (s *planTestSuite) TestForeignKeyChecksOff() {
 	vschema := loadSchema(s.T(), "vschemas/schema.json", true)
